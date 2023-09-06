@@ -1,11 +1,8 @@
-import time
 import numpy as np
-import pandas as pd
 import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_text as text
-import os
-import json
+import re
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -29,11 +26,33 @@ def translate_text(text, dest='en'):
 def predict_class(accidents):
     return [np.argmax(pred) for pred in multiclass_model.predict(accidents)]
 
+def clean_text(text):
+    emoji_pattern = re.compile("["
+                                u"\U0001F600-\U0001F64F"
+                                u"\U0001F300-\U0001F5FF"
+                                u"\U0001F680-\U0001F6FF"
+                                u"\U0001F1E0-\U0001F1FF"
+                                u"\U00002702-\U000027B0"
+                                u"\U000024C2-\U0001F251"
+                                "]+", flags=re.UNICODE)
+    text = emoji_pattern.sub(r'', text)
+
+    url = re.compile(r'https?://\S+|www\.\S+')
+    text = url.sub(r'',text)
+
+    text = text.replace('#',' ')
+    text = text.replace('@',' ')
+    symbols = re.compile(r'[^A-Za-z0-9 ]')
+    text = symbols.sub(r'',text)
+
+    return text
+
 @app.route("/predictedTopics", methods=["GET"])
 def getPredictedTopics():
     #json = request.get_json()
     #data = json['text']
-    data = "#almomento Conductores reportan una columna de humo sobre la Glorieta Colón. Solicitamos a Protección Civil y Bomberos GDL atender el reporte."
+    data = ""
+    data = clean_text(data)
     text = translate_text(data)
     
     predictions_list = [f'{text}']
@@ -42,7 +61,7 @@ def getPredictedTopics():
     accident = ''
     if predictions[0] == 0.:
         is_accident = False
-        return jsonify({'text': text, 'predictions': is_accident, 'date': time.time()})
+        return jsonify({'text': text, 'predictions': is_accident})
     else:
         is_accident = True
         accident_predictions = predict_class(predictions_list)
@@ -53,7 +72,7 @@ def getPredictedTopics():
         elif accident_predictions[0] == 2:
             accident = 'traffic light'
         
-        return jsonify({'text': text, 'predictions': is_accident, 'type': accident, 'date': time.time()})
+        return jsonify({'text': text, 'predictions': is_accident, 'type': accident})
 
 
 if __name__ == "__main__":
