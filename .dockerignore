@@ -1,0 +1,11 @@
+__pycache__
+.ipynb_checkpoints
+data
+trash
+multilabel
+.venv
+backend
+tweets.py
+*.ipynb
+*.csv
+*.xslx
