@@ -29,36 +29,6 @@ CORS(app)
 def message():
     return "App running"
 
-@app.route("/prueba", methods=["GET"])
-def toDB():
-    predictions_list = []
-    date = datetime.datetime.now()
-        
-    prediction = {
-        "text": "⚠️Choque entre dos vehículos en la Glorieta Colón ubicada entre la avenida Américas y López Mateos; Tómalo en cuenta si circulas por la zona #ReporteZMG",
-        "predictions": 1,
-        "date": date,
-        "state": 0
-    }
-            
-    predictions_list.append(prediction)
-    
-    each_prediction = []
-    for item in predictions_list:
-        predictions_tuple = (item["text"], item["date"], item["state"], item["predictions"])
-        each_prediction.append(predictions_tuple)
-    try:
-        cnxn = pyodbc.connect(cnxn_str)
-        cursor = cnxn.cursor()
-        query = f"INSERT INTO [dbo].[Accidentes] ([Descripcion], [Fecha], [Estado], [CategoriaId]) VALUES (?, ?, ?, ?)"
-        cursor.executemany(query, each_prediction)
-        cnxn.commit()
-        cnxn.close()
-        return predictions_list, 200
-    except Exception as e:
-        print(e)
-        return f"No hay publicaciones de precances viales\n{e}", 500
-
 def translate_text(text, dest='en'):
     translator = Translator()
     translation = translator.translate(text, dest=dest)
